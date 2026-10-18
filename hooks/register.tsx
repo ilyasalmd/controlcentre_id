@@ -755,12 +755,12 @@ export const register: Register = (on, options) => {
     const data = { bodyColumns: e.props.bodyColumns, isTerminal: e.surface === 'terminal', commands, ...extras }
     if (e.surface === 'desktop') {
       // The desktop lays a pad over each glass tile, made here so the pad's module is plain to see.
-      const { Client } = $.ui.resolve(e)
+      const ui = $.ui.resolve(e)
       const pads = new Map<string, RenderChildren>()
       for (const spot of padSpots()) {
-        pads.set(spot.key, <Client module="./pad.tsx" key={`pad-${spot.key}`} width={spot.width} height={spot.height} props={{ rows: spot.height }} />)
+        pads.set(spot.key, <ui.Client module="./pad.tsx" key={`pad-${spot.key}`} width={spot.width} height={spot.height} props={{ rows: spot.height }} />)
       }
-      return drawPane(actionsFor($), $.ui.resolve(e), { ...data, pads }, v)
+      return drawPane(actionsFor($), ui, { ...data, pads }, v)
     }
     return drawPane(actionsFor($), $.ui.resolve(e), data, v)
   })
