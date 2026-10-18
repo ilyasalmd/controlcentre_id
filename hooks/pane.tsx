@@ -1,6 +1,6 @@
 // The Control Center pane: Session, Limits, Activity, Actions and the Launcher, top to bottom.
 
-import type { Elements, EngineInterface, RenderSurface } from 'claude-code'
+import type { Elements, RenderSurface } from 'claude-code'
 
 import type { AgentCard, Launcher, Sample } from '../types'
 import {
@@ -8,13 +8,14 @@ import {
 } from './model'
 import type { Cmd, PaceView } from './model'
 import { drawGlassTiles } from './glass'
-import { handoff, launch, pin, setFilter, setKeepWarm, shrink, toggleExpanded } from './state'
-import type { View } from './state'
+import type { Actions, PadMaker, View } from './view'
 import { ACCENT, GLYPH, MUTED, TONE, spinner } from './theme'
 
 type Els = Elements[RenderSurface]
 
 export type PaneData = {
+  /** The press pad for glass tiles, where the surface has one. */
+  pad?: PadMaker
   bodyColumns: number
   isTerminal: boolean
   turnTokens: readonly number[]
@@ -27,7 +28,7 @@ export type PaneData = {
 
 const toned = (tone: 'fine' | 'watch' | 'act') => (tone === 'fine' ? undefined : TONE[tone])
 
-export function drawPane($: EngineInterface, els: Els, d: PaneData, v: View) {
+export function drawPane(act: Actions, els: Els, d: PaneData, v: View) {
   const { Box, Text, Button } = els
   const cols = Math.max(24, d.bodyColumns)
   const barWidth = Math.max(10, Math.min(40, cols - 14))
@@ -145,7 +146,7 @@ export function drawPane($: EngineInterface, els: Els, d: PaneData, v: View) {
     const markColor = a.status === 'running' ? ACCENT : a.status === 'done' ? TONE.fine : TONE.act
     return (
       <Box key={`agent-${a.id}`} flexDirection="column">
-        <Button key={`agent-row-${a.id}`} plain onPress={() => void toggleExpanded($, a.id)}>
+        <Button key={`agent-row-${a.id}`} plain onPress={() => void act.toggleExpanded(a.id)}>
           <Text dimColor>{`${n}  `}</Text>
           <Text color={markColor}>{mark}</Text>
           {` ${a.type}  `}
@@ -181,10 +182,10 @@ export function drawPane($: EngineInterface, els: Els, d: PaneData, v: View) {
     <Box key="actions" flexDirection="column">
       {heading('Actions')}
       <Box flexDirection="row" flexWrap="wrap" columnGap={1}>
-        <Button key="shrink" label={usage.tokens > 0 ? `Shrink chat (${fmtTokens(usage.tokens)})` : 'Shrink chat'} hotkey="s" variant={v.act?.kind === 'full' || v.act?.kind === 'cold' ? 'primary' : undefined} onPress={() => void shrink($)} />
-        <Button key="quick" label="Quick handoff" hotkey="h" variant={v.freshReason ? 'primary' : undefined} onPress={() => void handoff($, 'quick')} />
-        <Button key="full" label="Full handoff" hotkey="f" onPress={() => void handoff($, 'full')} />
-        <Button key="warm" label={v.isKeepingWarm ? 'Keep warm: on' : 'Keep warm: off'} hotkey="w" onPress={() => void setKeepWarm($, !v.isKeepingWarm)} />
+        <Button key="shrink" label={usage.tokens > 0 ? `Shrink chat (${fmtTokens(usage.tokens)})` : 'Shrink chat'} hotkey="s" variant={v.act?.kind === 'full' || v.act?.kind === 'cold' ? 'primary' : undefined} onPress={() => void act.shrink()} />
+        <Button key="quick" label="Quick handoff" hotkey="h" variant={v.freshReason ? 'primary' : undefined} onPress={() => void act.handoff('quick')} />
+        <Button key="full" label="Full handoff" hotkey="f" onPress={() => void act.handoff('full')} />
+        <Button key="warm" label={v.isKeepingWarm ? 'Keep warm: on' : 'Keep warm: off'} hotkey="w" onPress={() => void act.setKeepWarm(!v.isKeepingWarm)} />
       </Box>
       {v.freshReason ? <Text color={TONE.watch}>{v.freshReason}</Text> : null}
       <Text dimColor>Quick writes a note to paste into a fresh chat. Full also checks git and writes HANDOFF.md.</Text>
@@ -207,12 +208,12 @@ export function drawPane($: EngineInterface, els: Els, d: PaneData, v: View) {
     rows.push(
       <Box key={`cmd-${c.name}`} flexDirection="row">
         <Box flexGrow={1} flexShrink={1}>
-          <Button key={`run-${c.name}`} plain hotkey={i < 9 ? String(i + 1) : undefined} onPress={() => void launch($, c.name)}>
+          <Button key={`run-${c.name}`} plain hotkey={i < 9 ? String(i + 1) : undefined} onPress={() => void act.launch(c.name)}>
             {`/${c.name}  `}
             <Text dimColor>{c.description.length > room ? `${c.description.slice(0, Math.max(0, room - 1))}…` : c.description}</Text>
           </Button>
         </Box>
-        <Button key={`pin-${c.name}`} plain dimColor={!isPinned} label={isPinned ? '★' : '☆'} onPress={() => void pin($, c.name)} />
+        <Button key={`pin-${c.name}`} plain dimColor={!isPinned} label={isPinned ? '★' : '☆'} onPress={() => void act.pin(c.name)} />
       </Box>,
     )
   })
@@ -226,8 +227,8 @@ export function drawPane($: EngineInterface, els: Els, d: PaneData, v: View) {
           label="Find"
           placeholder={`search ${d.commands.length} skills and commands`}
           value={d.query}
-          onInput={(x: string) => void setFilter($, x)}
-          onSubmit={(x: string) => void setFilter($, x)}
+          onInput={(x: string) => void act.setFilter(x)}
+          onSubmit={(x: string) => void act.setFilter(x)}
         />
       ) : null}
       {rows.length ? (rows as never[]) : <Text dimColor>Type to search. Press ☆ on a result to pin it here.</Text>}
@@ -243,7 +244,7 @@ export function drawPane($: EngineInterface, els: Els, d: PaneData, v: View) {
 
   // The desktop draws Svg: the Liquid Glass Control Center alone, an always-on display; /cockpit opens and
   // closes it. Notices reach it as toasts; warnings show in the tiles themselves.
-  if (!d.isTerminal && 'Svg' in els) return drawGlassTiles($, els, v, d.turnTokens, d.bodyColumns)
+  if (!d.isTerminal && 'Svg' in els) return drawGlassTiles(act, els, v, d.turnTokens, d.bodyColumns, d.pad)
 
   return (
     <Box flexDirection="column" gap={1}>

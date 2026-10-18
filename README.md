@@ -69,6 +69,20 @@ Set these when you enable the plugin, or later in its options.
 | `guardTokens` | `100000` | Holds the first message after the cache goes cold, once, when the chat is at least this big, so you can compact first. Send it again to go ahead. `0` turns this off. |
 | `openAtStart` | on | Opens the Control Center beside each new chat. |
 
+## What it does on your behalf
+
+Cockpit only acts when you press one of its buttons or turn a setting on. These are the only things it does for you:
+
+- **Compact** runs `/compact` with this focus: "Keep: the current goal, decisions made and why, key file paths, what is done, what is left, and the exact next step."
+- **Handoff** sends a prompt to Claude as if you had typed it. The full handoff asks Claude to check `git status` and the last few commits, then write `HANDOFF.md` in the project root without committing it. The quick handoff asks for a short note in the chat and writes no files.
+- **The launcher** runs the slash command you tap or pin, and nothing else.
+- **Keep warm**, while it is on, sends one small model request ("Reply with the single word: warm") on a copy of the chat just before the prompt cache would expire, so the cache stays warm. Each ping counts toward your usage. It stops by itself after `keepWarmHours`, or as soon as you turn it off.
+- **The cold-cache guard** holds back one message, once, when the cache has gone cold on a big chat, so you can compact first. Sending the same message again lets it through. Set `guardTokens` to `0` to turn this off.
+
+It makes no network requests of its own, reads no credentials, and sends no telemetry. Your glass colour, opacity and launcher pins are stored on your machine in the plugin's own storage. The only web address in the code is the standard SVG namespace (`http://www.w3.org/2000/svg`), which every SVG file names.
+
+Where an organization manages Claude Code, Claude Code doesn't pass the session-start and compaction events to plugins you install yourself. In that setup the Context glass doesn't drain while Claude compacts, and the cache clock doesn't reset on `/clear` or carry over on resume. Everything else works as usual.
+
 ## Developing
 
 ```bash

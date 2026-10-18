@@ -1,10 +1,10 @@
 // The band above the prompt: one calm line of three facts, a second line only when it is time to act.
 
-import type { Elements, EngineInterface, RenderSurface } from 'claude-code'
+import type { Elements, RenderSurface } from 'claude-code'
 
 import { barCells, fmtDuration, fmtTokens, runs, turnsLeft, turnsWords } from './model'
-import { handoff, PANE_OPEN, PANE_TITLE, sendAnyway, setKeepWarm, shrink } from './state'
-import type { View } from './state'
+import { PANE_TITLE } from './view'
+import type { Actions, View } from './view'
 import { ACCENT, GLYPH, MUTED, TONE, spinner, tierOf } from './theme'
 
 type Els = Elements[RenderSurface]
@@ -107,16 +107,16 @@ function workingSeg(v: View, level: number): Seg {
 
 // ── Layouts, richest first ──────────────────────────────────────────────────
 
-function layouts($: EngineInterface, v: View, isWorking: boolean, turnTokens: readonly number[], hasAct: boolean, isTerminal: boolean): Layout[] {
-  const open = () => void $.ui.open(PANE_OPEN)
-  const fresh: Btn = { key: 'handoff', label: 'Start fresh', hotkey: 'h', isPrimary: true, onPress: () => void handoff($, 'quick') }
-  const quiet: Btn = { key: 'handoff', label: 'Handoff', hotkey: 'h', onPress: () => void handoff($, 'full') }
-  const shrinkBtn: Btn = { key: 'shrink', label: 'Compact', hotkey: 's', onPress: () => void shrink($) }
+function layouts(act: Actions, v: View, isWorking: boolean, turnTokens: readonly number[], hasAct: boolean, isTerminal: boolean): Layout[] {
+  const open = () => void act.openPane()
+  const fresh: Btn = { key: 'handoff', label: 'Start fresh', hotkey: 'h', isPrimary: true, onPress: () => void act.handoff('quick') }
+  const quiet: Btn = { key: 'handoff', label: 'Handoff', hotkey: 'h', onPress: () => void act.handoff('full') }
+  const shrinkBtn: Btn = { key: 'shrink', label: 'Compact', hotkey: 's', onPress: () => void act.shrink() }
   const warmBtn: Btn = {
     key: 'warm',
     label: v.isKeepingWarm ? `Warm ${GLYPH.warm}` : 'Keep warm',
     hotkey: 'w',
-    onPress: () => void setKeepWarm($, !v.isKeepingWarm),
+    onPress: () => void act.setKeepWarm(!v.isKeepingWarm),
   }
   const launcher = (label: string): Btn => ({ key: 'open', label, hotkey: 'k', onPress: open })
   // The app has room for words; the terminal keeps the glyph until it is wide.
@@ -153,12 +153,12 @@ function choose(all: Layout[], columns: number, density: string): Layout {
 
 export type BandProps = { bodyColumns: number; isWorking: boolean; isTerminal: boolean }
 
-export function drawBand($: EngineInterface, els: Els, p: BandProps, v: View, turnTokens: readonly number[]) {
+export function drawBand(actions: Actions, els: Els, p: BandProps, v: View, turnTokens: readonly number[]) {
   const { Box, Text, Button } = els
   const columns = Math.max(20, p.bodyColumns)
   const isWorking = p.isWorking || v.turn.isWorking
   const act = v.act
-  const layout = choose(layouts($, v, isWorking, turnTokens, act !== null, p.isTerminal), columns, v.settings.density)
+  const layout = choose(layouts(actions, v, isWorking, turnTokens, act !== null, p.isTerminal), columns, v.settings.density)
 
   const button = (b: Btn) => (
     <Button
@@ -213,16 +213,16 @@ export function drawBand($: EngineInterface, els: Els, p: BandProps, v: View, tu
       ? []
       : act.kind === 'cold'
         ? [
-            { key: 'act-shrink', label: 'Compact first', hotkey: 's', isPrimary: true, onPress: () => void shrink($) },
-            { key: 'act-fresh', label: 'Start fresh', hotkey: 'h', onPress: () => void handoff($, 'quick') },
-            { key: 'act-send', label: 'Send anyway', hotkey: 'a', onPress: () => void sendAnyway($) },
+            { key: 'act-shrink', label: 'Compact first', hotkey: 's', isPrimary: true, onPress: () => void actions.shrink() },
+            { key: 'act-fresh', label: 'Start fresh', hotkey: 'h', onPress: () => void actions.handoff('quick') },
+            { key: 'act-send', label: 'Send anyway', hotkey: 'a', onPress: () => void actions.sendAnyway() },
           ]
         : act.kind === 'full'
           ? [
-              { key: 'act-shrink', label: 'Compact now', hotkey: 's', isPrimary: true, onPress: () => void shrink($) },
-              { key: 'act-fresh', label: 'Start fresh', hotkey: 'h', onPress: () => void handoff($, 'quick') },
+              { key: 'act-shrink', label: 'Compact now', hotkey: 's', isPrimary: true, onPress: () => void actions.shrink() },
+              { key: 'act-fresh', label: 'Start fresh', hotkey: 'h', onPress: () => void actions.handoff('quick') },
             ]
-          : [{ key: 'act-details', label: 'Details', hotkey: 'd', onPress: () => void $.ui.open(PANE_OPEN) }]
+          : [{ key: 'act-details', label: 'Details', hotkey: 'd', onPress: () => void actions.openPane() }]
 
   const actRoom = columns - actButtons.reduce((n, b) => n + btnWidth(b) + 1, 0) - 3
   const actFits = act !== null && [...act.text].length <= actRoom
