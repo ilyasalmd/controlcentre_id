@@ -1,0 +1,63 @@
+{
+  "name": "cockpit",
+  "version": "2.1.0",
+  "description": "A calm control surface: chat fill, cache warmth and plan pace above the prompt, and a Control Center pane with forecasts, subagents, keep-warm, handoff and a launcher.",
+  "author": {
+    "name": "Ilyas Daneshmand"
+  },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "compactAt": {
+      "type": "number",
+      "title": "Compact point (tokens)",
+      "description": "Where Claude shrinks the chat by itself. 0 reads your autoCompactWindow setting, else 400000.",
+      "default": 0
+    },
+    "cacheLife": {
+      "type": "string",
+      "title": "Cache life",
+      "description": "auto: 1 hour on a subscription, 5 minutes on an API key.",
+      "default": "auto",
+      "options": [
+        "auto",
+        "1h",
+        "5m"
+      ]
+    },
+    "density": {
+      "type": "string",
+      "title": "Band density",
+      "description": "calm shows the three facts only; standard adapts to the width; full adds the bar and the weekly limit sooner.",
+      "default": "standard",
+      "options": [
+        "calm",
+        "standard",
+        "full"
+      ]
+    },
+    "keepWarm": {
+      "type": "boolean",
+      "title": "Keep the cache warm by default",
+      "description": "Starts each session with keep-warm on. Each ping is a small model request.",
+      "default": false
+    },
+    "keepWarmHours": {
+      "type": "number",
+      "title": "Keep-warm window (hours)",
+      "description": "How long keep-warm runs once turned on.",
+      "default": 3
+    },
+    "guardTokens": {
+      "type": "number",
+      "title": "Cold-send guard (tokens)",
+      "description": "Stop the first message after the cache goes cold when the chat is at least this big. 0 turns the guard off.",
+      "default": 100000
+    },
+    "openAtStart": {
+      "type": "boolean",
+      "title": "Open the Control Center in every chat",
+      "description": "Opens the Control Center beside each new chat. A terminal shows it from 144 columns wide.",
+      "default": true
+    }
+  }
+}

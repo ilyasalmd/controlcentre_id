@@ -1,0 +1,13 @@
+{
+  "name": "cockpit",
+  "description": "Cockpit, a Liquid Glass Control Center for the Claude Code desktop app",
+  "owner": {
+    "name": "Ilyas Daneshmand"
+  },
+  "plugins": [
+    {
+      "name": "cockpit",
+      "source": "./"
+    }
+  ]
+}
