@@ -79,6 +79,18 @@ Cockpit only acts when you press one of its buttons or turn a setting on. These 
 - **Keep warm**, while it is on, sends one small model request ("Reply with the single word: warm") on a copy of the chat just before the prompt cache would expire, so the cache stays warm. Each ping counts toward your usage. It stops by itself after `keepWarmHours`, or as soon as you turn it off.
 - **The cold-cache guard** holds back one message, once, when the cache has gone cold on a big chat, so you can compact first. Sending the same message again lets it through. Set `guardTokens` to `0` to turn this off.
 
+Its hooks watch the session so the tiles stay current, and they pass every event on unchanged, with the guard above as the one exception:
+
+- On tool calls it counts the tools in the current turn, and for a subagent it notes the tool for that agent's card.
+- When an agent starts it adds that agent's card. It never changes the agent's prompt, model or permissions.
+- On slash commands you type, it remembers the command name for the launcher's recent list.
+- On session start (clear, resume or fork) and on compaction, it resets or carries over the cache clock and drains the Context glass.
+- On a pane closing, it redraws.
+
+It never makes a permission decision.
+
+The `tests/` folder runs only under `claude plugin test`. There it plays the engine's part, which includes starting a pretend agent and calling a pretend tool. None of it ships into a session.
+
 It makes no network requests of its own, reads no credentials, and sends no telemetry. Your glass colour, opacity and launcher pins are stored on your machine in the plugin's own storage. The only web address in the code is the standard SVG namespace (`http://www.w3.org/2000/svg`), which every SVG file names.
 
 Where an organization manages Claude Code, Claude Code doesn't pass the session-start and compaction events to plugins you install yourself. In that setup the Context glass doesn't drain while Claude compacts, and the cache clock doesn't reset on `/clear` or carry over on resume. Everything else works as usual.

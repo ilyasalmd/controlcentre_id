@@ -752,11 +752,13 @@ export const register: Register = (on, options) => {
     const list = await $.command.list()
     const commands = list.map(c => ({ name: c.name, description: c.description }))
     const extras = await paneExtras($)
-    let pad: PadMaker | undefined
+    const data = { bodyColumns: e.props.bodyColumns, isTerminal: e.surface === 'terminal', commands, ...extras }
     if (e.surface === 'desktop') {
-      const { Client } = $.ui.resolve(e)
-      pad = (key, width, height) => <Client key={key} width={width} height={height} module="./pad.tsx" props={{ rows: height }} />
+      // The desktop lays a pad over each glass tile; the pane's drawing gets every element but the pad's Client.
+      const { Client, ...els } = $.ui.resolve(e)
+      const pad: PadMaker = (key, width, height) => <Client key={key} module="./pad.tsx" width={width} height={height} props={{ rows: height }} />
+      return drawPane(actionsFor($), els, { ...data, pad }, v)
     }
-    return drawPane(actionsFor($), $.ui.resolve(e), { bodyColumns: e.props.bodyColumns, isTerminal: e.surface === 'terminal', commands, ...extras, pad }, v)
+    return drawPane(actionsFor($), $.ui.resolve(e), data, v)
   })
 }
