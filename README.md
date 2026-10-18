@@ -91,7 +91,7 @@ It never makes a permission decision.
 
 The `tests/` folder runs only under `claude plugin test`. There it plays the engine's part, which includes starting a pretend agent and calling a pretend tool. None of it ships into a session.
 
-It makes no network requests of its own, reads no credentials, and sends no telemetry. Your glass colour, opacity and launcher pins are stored on your machine in the plugin's own storage. The only web address in the code is the standard SVG namespace (`http://www.w3.org/2000/svg`), which every SVG file names.
+It makes no network requests of its own, reads no credentials, and sends no telemetry. The word "token" in its code always means a count of the model's tokens. For example, `fmtTokens` turns 212000 into "212k". Your glass colour, opacity and launcher pins are stored on your machine in the plugin's own storage. The only web address in the code is the standard SVG namespace (`http://www.w3.org/2000/svg`), which every SVG file names.
 
 Where an organization manages Claude Code, Claude Code doesn't pass the session-start and compaction events to plugins you install yourself. In that setup the Context glass doesn't drain while Claude compacts, and the cache clock doesn't reset on `/clear` or carry over on resume. Everything else works as usual.
 

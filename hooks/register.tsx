@@ -586,14 +586,16 @@ export const register: Register = (on, options) => {
   })
 
   on('classic.SessionStart', async ($, e, next) => {
-    const r = await next(e)
-    if (e.source === 'clear') await resetForClear($)
-    else if ((e.source === 'resume' || e.source === 'fork') && typeof e.seconds_since_last_response === 'number') {
-      await resumeCacheClock($, e.seconds_since_last_response)
+    try {
+      return await next(e)
+    } finally {
+      if (e.source === 'clear') await resetForClear($)
+      else if ((e.source === 'resume' || e.source === 'fork') && typeof e.seconds_since_last_response === 'number') {
+        await resumeCacheClock($, e.seconds_since_last_response)
+      }
+      await armKeepWarm($)
+      await pace($)
     }
-    await armKeepWarm($)
-    await pace($)
-    return r
   })
 
   on('session.measure', async ($, e, next) => {

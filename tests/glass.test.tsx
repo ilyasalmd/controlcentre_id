@@ -274,7 +274,7 @@ test('agent activity reads as plain words', () => {
   expect(doingOf('Grep', { pattern: 'agent.spawn' })).toBe('Searching "agent.spawn"')
   expect(doingOf('Bash', { command: 'npm test -- --watch' })).toBe('Running npm test')
   expect(doingOf('Bash', { command: 'ls', description: 'List files' })).toBe('List files')
-  expect(doingOf('WebFetch', { url: 'https://docs.claude.com/x' })).toBe('Reading docs.claude.com')
+  expect(doingOf('WebFetch', { url: 'https://example.com/x' })).toBe('Reading example.com')
   expect(doingOf('mcp__github__create_issue', {})).toBe('Using create issue')
 })
 
