@@ -4,7 +4,7 @@
 // `pace` runs a timer only while a countdown shows.
 
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register, Timer } from 'claude-code'
+import type { EngineInterface, Register, RenderChildren, Timer } from 'claude-code'
 
 import type { AgentCard, Launcher, Look, Notice, Pressed, Sample, Squeeze, Tone, TurnInfo, Usage, Warmth } from '../types'
 import { DEFAULT_LOOK, GLASS_COLORS, parseColor, parseOpacity } from './art/glass'
@@ -18,7 +18,7 @@ import {
 import type { Settings } from './model'
 import { drawPane } from './pane'
 import { DRAIN_MS, PANE, PANE_OPEN, SETTLE_MS, drainLevel } from './view'
-import type { Actions, Pads, View } from './view'
+import type { Actions, View } from './view'
 
 const NOTICE_MS = 20_000
 
@@ -754,13 +754,13 @@ export const register: Register = (on, options) => {
     const extras = await paneExtras($)
     const data = { bodyColumns: e.props.bodyColumns, isTerminal: e.surface === 'terminal', commands, ...extras }
     if (e.surface === 'desktop') {
-      // The desktop lays a pad over each glass tile; the pane's drawing gets every element but the pad's Client.
-      const { Client, ...els } = $.ui.resolve(e)
-      const pads = new Map<string, ReturnType<typeof Client>>()
+      // The desktop lays a pad over each glass tile, made here so the pad's module is plain to see.
+      const { Client } = $.ui.resolve(e)
+      const pads = new Map<string, RenderChildren>()
       for (const spot of padSpots()) {
         pads.set(spot.key, <Client key={`pad-${spot.key}`} module="./pad.tsx" width={spot.width} height={spot.height} props={{ rows: spot.height }} />)
       }
-      return drawPane(actionsFor($), els, { ...data, pads }, v)
+      return drawPane(actionsFor($), $.ui.resolve(e), { ...data, pads }, v)
     }
     return drawPane(actionsFor($), $.ui.resolve(e), data, v)
   })
