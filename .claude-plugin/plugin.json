@@ -1,10 +1,16 @@
 {
   "name": "cockpit",
   "version": "2.1.0",
-  "description": "A calm control surface: chat fill, cache warmth and plan pace above the prompt, and a Control Center pane with forecasts, subagents, keep-warm, handoff and a launcher.",
+  "description": "A Liquid Glass Control Center for Claude Code: context, cache, usage limits and agents at a glance, with one-tap Compact, Handoff and Keep warm.",
   "author": {
     "name": "Ilyas Daneshmand"
   },
+  "homepage": "https://github.com/ilyasalmd/controlcentre_id",
+  "repository": "https://github.com/ilyasalmd/controlcentre_id",
+  "documentationUrl": "https://github.com/ilyasalmd/controlcentre_id#readme",
+  "supportUrl": "https://github.com/ilyasalmd/controlcentre_id/issues",
+  "privacyPolicyUrl": "https://github.com/ilyasalmd/controlcentre_id/blob/main/PRIVACY.md",
+  "termsOfServiceUrl": "https://github.com/ilyasalmd/controlcentre_id/blob/main/LICENSE",
   "types": "./types/index.d.ts",
   "userConfig": {
     "compactAt": {
