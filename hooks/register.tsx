@@ -758,7 +758,7 @@ export const register: Register = (on, options) => {
       const { Client } = $.ui.resolve(e)
       const pads = new Map<string, RenderChildren>()
       for (const spot of padSpots()) {
-        pads.set(spot.key, <Client key={`pad-${spot.key}`} module="./pad.tsx" width={spot.width} height={spot.height} props={{ rows: spot.height }} />)
+        pads.set(spot.key, <Client module="./pad.tsx" key={`pad-${spot.key}`} width={spot.width} height={spot.height} props={{ rows: spot.height }} />)
       }
       return drawPane(actionsFor($), $.ui.resolve(e), { ...data, pads }, v)
     }
