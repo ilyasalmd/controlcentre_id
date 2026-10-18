@@ -60,5 +60,5 @@ export type Actions = {
   pressOnce: (key: string, work: () => Promise<unknown>) => Promise<unknown>
 }
 
-/** Draws the invisible press pad over a glass tile, on a surface that has one (./pad.tsx). */
-export type PadMaker = (key: string, width: number, height: number) => RenderChildren
+/** The invisible press pad over each glass tile, by the tile's key, on a surface that has them (./pad.tsx). */
+export type Pads = ReadonlyMap<string, RenderChildren>

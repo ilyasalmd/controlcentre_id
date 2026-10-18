@@ -11,7 +11,7 @@ import { FULL, GAP, agentsTile, appearanceTile, cacheTile, contextTile, gaugeTil
 import { MINUTE, fmtDuration, fmtTokens, turnsLeft, turnsWords } from './model'
 import type { PaceView } from './model'
 import { DRAIN_MS, SETTLE_MS, drainLevel } from './view'
-import type { Actions, PadMaker, View } from './view'
+import type { Actions, Pads, View } from './view'
 
 // ── From Cockpit's snapshot to the tiles' figures ───────────────────────────
 
@@ -142,17 +142,18 @@ export const presses = new Map<string, () => void>()
  * A pressable tile: the glass with a pad over all of it. The pad is a Client drawing nothing, so the desktop
  * draws no hover; the tile's `alt` names it. Without Client, a plain Button of transparent blanks over the icon.
  */
-function pressable(els: SvgEls, tileSvg: string, alt: string, hit: Hit, pad?: PadMaker) {
+function pressable(els: SvgEls, tileSvg: string, alt: string, hit: Hit, pads?: Pads) {
   const { Box, Button, Svg, Text } = els
   const padKey = `pad-${hit.key}`
   const reach = hit.pad ?? ROUND_PAD
+  const pad = pads?.get(hit.key)
   presses.set(padKey, hit.onPress)
   return (
     <Box key={`tile-${hit.key}`} position="relative" flexDirection="column">
       {glassEl(Svg, tileSvg, alt, `svg-${hit.key}`)}
       {pad ? (
         <Box position="absolute" left={0} top={0} width={reach.width} height={reach.height}>
-          {pad(padKey, reach.width, reach.height)}
+          {pad}
         </Box>
       ) : (
         <Box position="absolute" {...(hit.at ?? ON_ICON)}>
@@ -181,23 +182,32 @@ export function drawLaunch(els: Pick<SvgEls, 'Box' | 'Button' | 'Text'>, modes: 
   )
 }
 
+/** Every pad the glass can show, by its tile's key, with its reach: the round buttons, then the Appearance swatches. */
+export function padSpots() {
+  return [
+    ...['shrink', 'handoff', 'warm', 'look'].map(key => ({ key, ...ROUND_PAD })),
+    ...['none', ...Object.keys(GLASS_COLORS)].map(name => ({ key: `color-${name}`, ...SWATCH_PAD })),
+    ...OPACITY_STEPS.map(opacity => ({ key: `opacity-${opacity}`, ...SWATCH_PAD })),
+  ]
+}
+
 const isBusy = (v: View, key: string) => v.pressed?.key === key && v.pressed.isBusy
 
 /** The steps the opacity row offers: Apple's clear and tinted, and between. */
 const OPACITY_STEPS = [0, 20, 40, 58, 80, 100]
 
 /** The Appearance panel: every colour, then the opacity steps, each a tap; the chosen ones ringed. */
-function drawAppearance(act: Actions, els: SvgEls, v: View, pad?: PadMaker) {
+function drawAppearance(act: Actions, els: SvgEls, v: View, pads?: Pads) {
   const { Box, Svg } = els
   const colors: [string, string | null][] = [['none', null], ...Object.entries(GLASS_COLORS)]
   const swatch = ([name, color]: [string, string | null]) =>
     pressable(els, swatchTile({ color, name, isSelected: v.look.color === color }), `Glass colour ${name}`, {
       key: `color-${name}`, pad: SWATCH_PAD, at: ON_SWATCH, cells: 3, onPress: () => void act.changeLook({ color }),
-    }, pad)
+    }, pads)
   const step = (opacity: number) =>
     pressable(els, opacityTile({ opacity, color: v.look.color, isSelected: v.look.opacity === opacity }), `Glass opacity ${opacity}%`, {
       key: `opacity-${opacity}`, pad: SWATCH_PAD, at: ON_SWATCH, cells: 3, onPress: () => void act.changeLook({ opacity }),
-    }, pad)
+    }, pads)
   return (
     <Box key="appearance" position="relative" flexDirection="column">
       {glassEl(Svg, appearanceTile(), 'Appearance', 'svg-appearance')}
@@ -219,7 +229,7 @@ export function agentsWidth(bodyColumns: number): { width: number; isBeside: boo
 /** About how many CSS pixels a desktop cell is. */
 const CELL_PX = 8
 
-export function drawGlassTiles(act: Actions, els: SvgEls, v: View, turnTokens: readonly number[], bodyColumns = 0, pad?: PadMaker) {
+export function drawGlassTiles(act: Actions, els: SvgEls, v: View, turnTokens: readonly number[], bodyColumns = 0, pads?: Pads) {
   const { Box, Svg } = els
   setLook(v.look)
   presses.clear()
@@ -264,22 +274,22 @@ export function drawGlassTiles(act: Actions, els: SvgEls, v: View, turnTokens: r
             <Box flexDirection="row">
               {pressable(els, roundTile(compactArt), compactArt.isBusy ? 'Compacting' : 'Compact', {
                 key: 'shrink', onPress: () => void act.pressOnce('shrink', () => act.shrink()),
-              }, pad)}
+              }, pads)}
               {pressable(els, roundTile(handoffArt), handoffArt.isBusy ? 'Writing the handoff' : 'Handoff', {
                 key: 'handoff', onPress: () => void act.pressOnce('handoff', () => act.handoff('full')),
-              }, pad)}
+              }, pads)}
             </Box>
             <Box flexDirection="row">
               {pressable(els, roundTile(warmArt), v.isKeepingWarm ? 'Keep-warm is on' : 'Keep-warm is off', {
                 key: 'warm', onPress: () => void act.pressOnce('warm', () => act.setKeepWarm(!v.isKeepingWarm)),
-              }, pad)}
+              }, pads)}
               {pressable(els, roundTile(lookArt), v.isCustomizing ? 'Done customizing' : 'Customize', {
                 key: 'look', onPress: () => void act.toggleCustomize(),
-              }, pad)}
+              }, pads)}
             </Box>
           </Box>
         </Box>
-        {v.isCustomizing ? drawAppearance(act, els, v, pad) : null}
+        {v.isCustomizing ? drawAppearance(act, els, v, pads) : null}
       </Box>
       <Box key="agents" marginLeft={side.isBeside ? 1 : 0}>
         {glassEl(Svg, agentsTile(crew(v), crewSummary(v), side.width), `Agents: ${crewSummary(v)}`, 'svg-agents')}

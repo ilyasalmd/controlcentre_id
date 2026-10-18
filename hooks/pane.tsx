@@ -8,14 +8,14 @@ import {
 } from './model'
 import type { Cmd, PaceView } from './model'
 import { drawGlassTiles } from './glass'
-import type { Actions, PadMaker, View } from './view'
+import type { Actions, Pads, View } from './view'
 import { ACCENT, GLYPH, MUTED, TONE, spinner } from './theme'
 
 type Els = Elements[RenderSurface]
 
 export type PaneData = {
   /** The press pad for glass tiles, where the surface has one. */
-  pad?: PadMaker
+  pads?: Pads
   bodyColumns: number
   isTerminal: boolean
   turnTokens: readonly number[]
@@ -244,7 +244,7 @@ export function drawPane(act: Actions, els: Els, d: PaneData, v: View) {
 
   // The desktop draws Svg: the Liquid Glass Control Center alone, an always-on display; /cockpit opens and
   // closes it. Notices reach it as toasts; warnings show in the tiles themselves.
-  if (!d.isTerminal && 'Svg' in els) return drawGlassTiles(act, els, v, d.turnTokens, d.bodyColumns, d.pad)
+  if (!d.isTerminal && 'Svg' in els) return drawGlassTiles(act, els, v, d.turnTokens, d.bodyColumns, d.pads)
 
   return (
     <Box flexDirection="column" gap={1}>

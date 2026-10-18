@@ -9,7 +9,7 @@ import type { EngineInterface, Register, Timer } from 'claude-code'
 import type { AgentCard, Launcher, Look, Notice, Pressed, Sample, Squeeze, Tone, TurnInfo, Usage, Warmth } from '../types'
 import { DEFAULT_LOOK, GLASS_COLORS, parseColor, parseOpacity } from './art/glass'
 import { drawBand } from './band'
-import { drawLaunch, presses } from './glass'
+import { drawLaunch, padSpots, presses } from './glass'
 import {
   FIVE_HOURS, MINUTE, WEEK,
   actNeeded, cacheTtl, cacheView, chatView, doingOf, fmtDuration, fmtTokens, guardDecision, holdLimit, isCold, isWarmPing, paceView, pingDelay,
@@ -18,7 +18,7 @@ import {
 import type { Settings } from './model'
 import { drawPane } from './pane'
 import { DRAIN_MS, PANE, PANE_OPEN, SETTLE_MS, drainLevel } from './view'
-import type { Actions, PadMaker, View } from './view'
+import type { Actions, Pads, View } from './view'
 
 const NOTICE_MS = 20_000
 
@@ -756,8 +756,11 @@ export const register: Register = (on, options) => {
     if (e.surface === 'desktop') {
       // The desktop lays a pad over each glass tile; the pane's drawing gets every element but the pad's Client.
       const { Client, ...els } = $.ui.resolve(e)
-      const pad: PadMaker = (key, width, height) => <Client key={key} module="./pad.tsx" width={width} height={height} props={{ rows: height }} />
-      return drawPane(actionsFor($), els, { ...data, pad }, v)
+      const pads = new Map<string, ReturnType<typeof Client>>()
+      for (const spot of padSpots()) {
+        pads.set(spot.key, <Client key={`pad-${spot.key}`} module="./pad.tsx" width={spot.width} height={spot.height} props={{ rows: spot.height }} />)
+      }
+      return drawPane(actionsFor($), els, { ...data, pads }, v)
     }
     return drawPane(actionsFor($), $.ui.resolve(e), data, v)
   })
