@@ -154,9 +154,9 @@ async function loadLook($: EngineInterface) {
 
 /** Changes the glass's colour or opacity, here and in every chat after. */
 async function changeLook($: EngineInterface, change: Partial<Look>) {
-  const next = await update($, look, l => ({ ...l, ...change }))
-  await $.store.set('look', next)
-  return next
+  const saved = await update($, look, l => ({ ...l, ...change }))
+  await $.store.set('look', saved)
+  return saved
 }
 
 /** Opens or closes the Appearance panel under the Control Center's grid. */
@@ -242,7 +242,7 @@ async function agentStarted($: EngineInterface, card: Omit<AgentCard, 'startedAt
 }
 
 /** The main turn ended: the timer stops, the cache clock settles, the forecast gets a reading. */
-async function finishTurn($: EngineInterface, e: { durationMs: number; isAborted: boolean; hasUsage: boolean }) {
+async function finishTurn($: EngineInterface, ended: { durationMs: number; isAborted: boolean; hasUsage: boolean }) {
   const now = await $.clock.now()
   const t = await read($, turn)
   const took = t.startedAt > 0 ? Math.round((now - t.startedAt) / 1000) : null
@@ -250,7 +250,7 @@ async function finishTurn($: EngineInterface, e: { durationMs: number; isAborted
   // Only a turn the API answered touched the cache; an aborted or failed one (no usage) did not.
   await update($, warmth, w => ({
     ...w,
-    lastRequestAt: e.hasUsage && now - w.lastRequestAt > e.durationMs ? now : w.lastRequestAt,
+    lastRequestAt: ended.hasUsage && now - w.lastRequestAt > ended.durationMs ? now : w.lastRequestAt,
     isCompacted: false,
     ackedAt: 0,
   }))
@@ -259,7 +259,7 @@ async function finishTurn($: EngineInterface, e: { durationMs: number; isAborted
   const tokens = after.tokens
   // A real reply that reported no plan limits, in a chat that never showed any, means an API key: the cache lives 5 minutes.
   const held = await read($, usage)
-  if (e.hasUsage && !after.isPlan && held.five === null && held.week === null) await learnPlan($, false)
+  if (ended.hasUsage && !after.isPlan && held.five === null && held.week === null) await learnPlan($, false)
   if (tokens > 0) await update($, turnTokens, list => [...list, tokens].slice(-16))
   if (took !== null && took >= 60) $.ui.toast(`Done in ${fmtDuration(took * 1000)} · ${t.tools} tool call${t.tools === 1 ? '' : 's'}`)
 }
@@ -387,8 +387,8 @@ async function handoff($: EngineInterface, kind: 'quick' | 'full') {
 }
 
 async function remember($: EngineInterface, name: string) {
-  const next = await update($, launcher, l => ({ ...l, recent: pushRecent(l.recent, name) }))
-  await $.store.set('launcher', next)
+  const saved = await update($, launcher, l => ({ ...l, recent: pushRecent(l.recent, name) }))
+  await $.store.set('launcher', saved)
 }
 
 async function launch($: EngineInterface, name: string) {
@@ -401,8 +401,8 @@ async function launch($: EngineInterface, name: string) {
 }
 
 async function pin($: EngineInterface, name: string) {
-  const next = await update($, launcher, l => ({ ...l, pinned: togglePin(l.pinned, name) }))
-  await $.store.set('launcher', next)
+  const saved = await update($, launcher, l => ({ ...l, pinned: togglePin(l.pinned, name) }))
+  await $.store.set('launcher', saved)
 }
 
 /** The person chose to pay the cold re-read: the guard lets the next message through. */
