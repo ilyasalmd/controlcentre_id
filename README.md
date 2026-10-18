@@ -2,6 +2,8 @@
 
 A Liquid Glass control centre for the Claude Code desktop app, in the spirit of the one on iPhone and Mac. It shows how full the chat is, how warm the cache is and how much of your plan is left, and gives you round buttons for the things you reach for most.
 
+![The Control Center: the Context glass drains while Claude compacts, then settles on the new size](docs/demo.gif)
+
 ![The Control Center in dark mode](docs/control-centre-dark.png)
 
 ![The Control Center in light mode](docs/control-centre-light.png)
